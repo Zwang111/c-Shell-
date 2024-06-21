@@ -1,0 +1,8 @@
+ls
+echo the current date/time is
+date
+echo username:
+whoami
+# if 2 > 5
+# then
+#    cat main.cpp
