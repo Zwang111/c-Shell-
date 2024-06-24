@@ -11,7 +11,7 @@
 
 class Shell {
 public:
-    void run() {
+    void run() { // 提供命令输入及退出
         while (true) {
             std::cout << "Shell> ";
             std::string input;
@@ -26,7 +26,7 @@ public:
         }
     }
 
-    void executeCommand(const std::string& command) {
+    void executeCommand(const std::string& command) {  // 执行命令
         // 将命令拆分为参数
         std::vector<std::string> args = splitCommand(command);
         if (args.empty()) {
@@ -99,11 +99,12 @@ private:
             waitpid(pid, &status, 0);
         }
     }
-
+    // 处理输入输出重定向
     void handleRedirection(std::vector<std::string>& args) {
         for (size_t i = 0; i < args.size(); ++i) {
             if (args[i] == ">") {
                 if (i + 1 < args.size()) {
+                    // 输出重定向（覆盖模式）
                     int fd = open(args[i + 1].c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
                     if (fd < 0) {
                         perror("open failed");
@@ -141,9 +142,9 @@ private:
             }
         }
     }
-
+     // 将输入的命令字符串按照 '|' 分割成多个子命令
     std::vector<std::string> splitPipeline(const std::string& command) {
-        std::vector<std::string> commands;
+        std::vector<std::string> commands; // 存储分割后的命令
         std::istringstream iss(command);
         std::string token;
         while (std::getline(iss, token, '|')) {
@@ -158,17 +159,17 @@ private:
         int fd_in = 0;
 
         for (int i = 0; i < numCommands; ++i) {
-            pipe(pipefd);
+            pipe(pipefd);             // 创建管道
             if ((pid = fork()) == -1) {
                 perror("fork failed");
                 exit(EXIT_FAILURE);
             } else if (pid == 0) {
-                dup2(fd_in, 0);
+                dup2(fd_in, 0);  // 将标准输入重定向到 fd_in
                 if (i < numCommands - 1) {
-                    dup2(pipefd[1], 1);
+                    dup2(pipefd[1], 1); // 将标准输出重定向到管道的写入端
                 }
-                close(pipefd[0]);
-
+                close(pipefd[0]);  // 关闭管道的读取端
+                // 解析命令并处理重定向
                 std::vector<std::string> args = splitCommand(commands[i]);
                 handleRedirection(args);
                 char* argv[args.size() + 1];
@@ -177,13 +178,13 @@ private:
                 }
                 argv[args.size()] = nullptr;
 
-                execvp(argv[0], argv);
+                execvp(argv[0], argv);             // 执行命令
                 perror("execvp failed");
                 exit(EXIT_FAILURE);
             } else {
                 wait(nullptr);
                 close(pipefd[1]);
-                fd_in = pipefd[0];
+                fd_in = pipefd[0]; // 将管道的读取端作为下一个命令的标准输入
             }
         }
     }

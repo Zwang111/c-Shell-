@@ -1,1 +1,1 @@
-"Test" > output.txt
+test redirection > output.txt
